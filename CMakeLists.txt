@@ -11,10 +11,11 @@ set(GLEW_DIR "C:/glew-2.1.0")
 set(GLM_DIR "C:/glm-0.9.9.8")
 
 # Find SFML
-find_package(SFML 3 REQUIRED COMPONENTS Window System)
+find_package(SFML 3 REQUIRED COMPONENTS Window System Graphics)
 
 # Add GLEW
 include_directories(${GLEW_DIR}/include)
+message(STATUS "GLEW Include Directory being added: ${GLEW_DIR}/include") 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     link_directories(${GLEW_DIR}/lib/Release/x64)
 else()
@@ -24,11 +25,16 @@ endif()
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 
+# Add source directory for header files
+include_directories(src) 
+
 # Add GLM
 include_directories(${GLM_DIR})
 
 # Add your executable
-add_executable(main src/main.cpp)
+add_executable(main src/main.cpp
+src/dice.cpp
+src/slider.cpp)
 
 # Set C++ standard
 target_compile_features(main PRIVATE cxx_std_17)
@@ -37,6 +43,7 @@ target_compile_features(main PRIVATE cxx_std_17)
 target_link_libraries(main 
     sfml-window
     sfml-system
+    sfml-graphics
     OpenGL::GL
     glew32
 )
@@ -47,6 +54,7 @@ if(WIN32)
     set(DLLS_TO_COPY
         "${SFML_ROOT}/bin/sfml-window-3.dll"
         "${SFML_ROOT}/bin/sfml-system-3.dll"
+        "${SFML_ROOT}/bin/sfml-graphics-3.dll"
         "${GLEW_DIR}/bin/Release/x64/glew32.dll"
     )
 
