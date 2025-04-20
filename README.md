@@ -42,8 +42,14 @@ The template starts out very basic, but might receive additional features over t
    Be sure to run these commands in the root directory of the project you just created.
 
    ```
-   cmake -B build
-   cmake --build build
+   cd "C:\path\to\your\Dice"
+   Remove-Item -Recurse -Force -ErrorAction SilentlyContinue .\build
+   New-Item -ItemType Directory -Name build
+   cd build
+   cmake ..
+   cmake --build . --config Debug
+   cd bin\Debug
+   .\main.exe
    ```
 
 9. Enjoy!

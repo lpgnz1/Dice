@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/component_wise.hpp>
 
 #ifdef _WIN32 // Include this block only for Windows builds
 #include <Windows.h>
@@ -39,9 +40,16 @@ sf::Window* InitialiseWindow() {
 
     int windowHeight = screenHeight - taskbarHeight; // Calculate window height excluding taskbar
 
+    sf::ContextSettings settings;
+    settings.depthBits = 24; // Set depth bits for OpenGL context
+    settings.stencilBits = 8; // Set stencil bits for OpenGL context
+    settings.antialiasingLevel = 4; // Set antialiasing level for OpenGL context
+    settings.majorVersion = 3; // Set OpenGL major version
+    settings.minorVersion = 3; // Set OpenGL minor version
+
     // Create SFML VideoMode and Window
     sf::VideoMode videoMode(screenWidth, windowHeight);
-    sf::Window* window = new sf::Window(videoMode, "SFML Maximized Below Taskbar", sf::Style::None);
+    sf::Window* window = new sf::Window(videoMode, "SFML Maximized Below Taskbar", sf::Style::None, settings);
 
     return window;
 }
@@ -61,15 +69,14 @@ void main() {
 }
 )";
 
-// Shader source code - SIMPLIFIED FRAGMENT SHADER (SOLID RED)
 const char* fragmentShaderSource = R"(
-#version 330 core
-in vec3 fragColor; // Input from vertex shader
-out vec4 FragColor;
-void main() {
-    FragColor = vec4(fragColor, 1.0f); // Output vertex color
-}
-)";
+    #version 330 core
+    in vec3 fragColor; // Input from vertex shader
+    out vec4 FragColor;
+    void main() {
+        FragColor = vec4(fragColor, 1.0f); // Output vertex color
+    }
+    )";
 
 // Shader source code - SIMPLIFIED FRAGMENT SHADER (SOLID BLUE)
 const char* fragmentShaderSimple = R"(
@@ -202,8 +209,8 @@ int main() {
     //std::pair<std::vector<float>, std::vector<unsigned int>> geometryData = createCubeGeometry();
     //std::vector<float> d6vertices = geometryData.first;  // Extract vertices
     //std::vector<unsigned int> d6indices = geometryData.second; // Extract indices
-    glm::vec3 cubeMin = glm::vec3(-1.0f, -1.0f, -1.0f); // Example AABB - adjust based on your cube size
-    glm::vec3 cubeMax = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 cubeMin = glm::vec3(-0.5f, -0.5f, -0.5f);
+    glm::vec3 cubeMax = glm::vec3(0.5f, 0.5f, 0.5f);
     bool isCubeClicked = false; // FLag to track if the cube is clicked
     sf::Vector2i flickStartPosition;
     sf::Vector2i flickEndPosition;
@@ -223,11 +230,11 @@ int main() {
     std::cout << "GLEW initialized" << std::endl;
     glEnable(GL_DEPTH_TEST);
     checkGLError("glEnable(GL_DEPTH_TEST)"); // Error check
-    glDepthFunc(GL_ALWAYS); // Explicitly set depth function to GL_LESS
-    glEnable(GL_BLEND);
-    checkGLError("glEnable(GL_BLEND)"); // Error check
+    glDepthFunc(GL_LESS); // Explicitly set depth function to GL_LESS
+    //glEnable(GL_BLEND);
+    //checkGLError("glEnable(GL_BLEND)"); // Error check
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   // glDisable(GL_CULL_FACE); // Disable backface culling - ADD THIS LINE
+    glDisable(GL_CULL_FACE); // Disable backface culling - ADD THIS LINE
 
     checkGLError("glBlendFunc"); // Error check
     std::cout << "OpenGL state set" << std::endl;
@@ -256,16 +263,12 @@ int main() {
     GLuint VAO, VBO, EBO;
     unsigned int indexCount; // Declare indexCount here
     createCubeGeometry(VAO, VBO, EBO, 6, indexCount); // Call createCubeGeometry and get indexCount
+    std::cout << "DEBUG: Index count passed to glDrawElements: " << indexCount << std::endl;
     checkGLError("createCubeGeometry"); // Error check
     std::cout << "Cube geometry created (VAO, VBO, EBO)" << std::endl;
     sf::Event event; // Declare event outside the loop
     std::cout << "Event made" << std::endl; // Debug: Other event types
 
-    // **ADD THESE LINES: Get and print uniform locations**
-    GLint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-    GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
-    GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
-    //std::cout << "Uniform locations: projection=" << projectionLoc << ", view=" << viewLoc << ", model=" << modelLoc << std::endl;
 
     bool isWindowClosed = false; // **ADD THIS FLAG**
 
@@ -358,9 +361,16 @@ int main() {
             angularVelocity = glm::vec3(0.0f); // Stop rolling if velocity is very small
         }
         // --- End Apply Rolling Motion ---
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Transparent background (RGBA: Black, Alpha 0)
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // Dark cyan, fully opaque
+        //glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Transparent background (RGBA: Black, Alpha 0)
         // Clear the screen and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        
+        // **Check uniform locations again right before setting them**
+        GLint projectionLoc = glGetUniformLocation(shaderProgram, "projection"); // Declare projectionLoc here
+        GLint viewLoc = glGetUniformLocation(shaderProgram, "view"); // Declare viewLoc here
+        GLint modelLoc = glGetUniformLocation(shaderProgram, "model"); // Declare modelLoc here
 
         // **SKIP RENDERING IF WINDOW CLOSED**
         if (!isWindowClosed) { // **RENDERING CONDITION**
@@ -373,10 +383,55 @@ int main() {
             glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
             glm::mat4 model = glm::mat4_cast(rotationQuat); // Apply rotation quaternion
 
-            // **Check uniform locations again right before setting them**
-            GLint projectionLoc = glGetUniformLocation(shaderProgram, "projection"); // Declare projectionLoc here
-            GLint viewLoc = glGetUniformLocation(shaderProgram, "view"); // Declare viewLoc here
-            GLint modelLoc = glGetUniformLocation(shaderProgram, "model"); // Declare modelLoc here
+
+            // Inside the render loop, before setting uniforms...
+            GLint currentProgram;
+            glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram); // Get currently bound program ID
+            if (currentProgram != shaderProgram) {
+                std::cerr << "ERROR: Wrong shader program bound!" << std::endl;
+            } else {
+                // std::cout << "DEBUG: Shader OK. Uniforms: Proj=" << projectionLoc << ", View=" << viewLoc << ", Model=" << modelLoc << std::endl; // Temporarily uncomment
+                if (projectionLoc == -1 || viewLoc == -1 || modelLoc == -1) {
+                    //std::cerr << "ERROR: Invalid uniform location detected! Proj=" << projectionLoc << ", View=" << viewLoc << ", Model=" << modelLoc << std::endl;
+                }
+            }
+
+            // Inside render loop, after calculating matrices, before glUniform...
+            // Check Projection Matrix for NaN/Inf column by column
+            bool projHasNanOrInf = false;
+            for (int i = 0; i < 4; ++i) {
+                if (glm::any(glm::isnan(projection[i])) || glm::any(glm::isinf(projection[i]))) {
+                    projHasNanOrInf = true;
+                    break;
+                }
+            }
+            if (projHasNanOrInf) {
+                std::cerr << "ERROR: Projection matrix contains NaN/Inf!" << std::endl;
+            }
+
+            // Check View Matrix for NaN/Inf column by column
+            bool viewHasNanOrInf = false;
+            for (int i = 0; i < 4; ++i) {
+                if (glm::any(glm::isnan(view[i])) || glm::any(glm::isinf(view[i]))) {
+                    viewHasNanOrInf = true;
+                    break;
+                }
+            }
+            if (viewHasNanOrInf) {
+                std::cerr << "ERROR: View matrix contains NaN/Inf!" << std::endl;
+            }
+
+            // Check Model Matrix for NaN/Inf column by column
+            bool modelHasNanOrInf = false;
+            for (int i = 0; i < 4; ++i) {
+                if (glm::any(glm::isnan(model[i])) || glm::any(glm::isinf(model[i]))) {
+                    modelHasNanOrInf = true;
+                    break;
+                }
+            }
+            if (modelHasNanOrInf) {
+                std::cerr << "ERROR: Model matrix contains NaN/Inf!" << std::endl;
+            }
 
 
             // Pass matrices to the shader

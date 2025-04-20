@@ -21,7 +21,7 @@ float d6vertices[] = {
     -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // 20 (was 4)
     0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // 21 (was 5)
     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f, // 22 (was 1)
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f  // 23 (was 0)
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  // 23 (was 0)
 
     // positions          // colors             // Face: Front (Red)
     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, // 0
@@ -65,10 +65,10 @@ void createCubeGeometry(GLuint& VAO, GLuint& VBO, GLuint& EBO, int dice, unsigne
 
 
     // After creating vertices and indices, add logging:
-    std::cout << "All Vertices: " << std::endl; // Corrected to 18 vertices (6 * 3 components)
-    for (int i = 0; i < vertices.size(); ++i) { // Print first 18 vertex components
-        std::cout << "Vertex component " << i << ": " << vertices[i] << std::endl;
-    }
+    // std::cout << "All Vertices: " << std::endl; // Corrected to 18 vertices (6 * 3 components)
+    // for (int i = 0; i < vertices.size(); ++i) { // Print first 18 vertex components
+    //     std::cout << "Vertex component " << i << ": " << vertices[i] << std::endl;
+    // }
 
     std::cout << "First 6 indices: " << std::endl;
     for (int i = 0; i < 6 && i < indices.size(); ++i) { // Print first 6 indices
